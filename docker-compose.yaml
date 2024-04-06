@@ -132,6 +132,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
+      - ./grafana.ini:/etc/grafana/grafana.ini
       - ./provisioning:/etc/grafana/provisioning
       - ./dashboards:/var/lib/grafana/dashboards
     environment:
