@@ -6,61 +6,51 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
-	"time"
 )
 
-type City struct {
-	Il       string `json:"il"`
-	Ilceler  string `json:"ilceler"`
+type Country struct {
+	Ulke    string `json:"ulke"`
+	Nufus   int    `json:"nufus"`
+	Baskent string `json:"baskent"`
 }
 
 func IndexHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Merhaba Go!")
 }
 
-func RandomCityHandler(w http.ResponseWriter, r *http.Request) {
-	esURL := "http://es01:9200/iller/_search"
+func RandomCountryHandler(w http.ResponseWriter, r *http.Request) {
+	esURL := "http://es01:9200/ulkeler/_search"
 
-	client := http.Client{
-		Timeout: time.Second * 10,
-	}
-
-	req, err := http.NewRequest(http.MethodGet, esURL, nil)
+	response, err := http.Get(esURL)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	res, err := client.Do(req)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer res.Body.Close()
+	defer response.Body.Close()
 
 	var data map[string]interface{}
-	err = json.NewDecoder(res.Body).Decode(&data)
-	if err != nil {
+	if err := json.NewDecoder(response.Body).Decode(&data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	hits := data["hits"].(map[string]interface{})["hits"].([]interface{})
 	randomIndex := rand.Intn(len(hits))
-	randomCity := hits[randomIndex].(map[string]interface{})["_source"].(map[string]interface{})
+	randomCountry := hits[randomIndex].(map[string]interface{})["_source"].(map[string]interface{})
 
-	city := City{
-		Il:      randomCity["il"].(string),
-		Ilceler: randomCity["ilceler"].(string),
+	country := Country{
+		Ulke:    randomCountry["ulke"].(string),
+		Nufus:   int(randomCountry["nufus"].(float64)),
+		Baskent: randomCountry["baskent"].(string),
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(city)
+	json.NewEncoder(w).Encode(country)
 }
 
 func main() {
 	http.HandleFunc("/", IndexHandler)
-	http.HandleFunc("/staj", RandomCityHandler)
+	http.HandleFunc("/staj", RandomCountryHandler)
 
 	fmt.Println("Server started on port 5555...")
 	log.Fatal(http.ListenAndServe(":5555", nil))

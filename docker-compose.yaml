@@ -124,6 +124,7 @@ services:
       - ./haproxy:/usr/local/etc/haproxy
     networks:
       - elastic
+    restart: unless-stopped
 
   grafana:
     image: grafana/grafana:latest

@@ -25,10 +25,13 @@ def random_city():
         random_city = random.choice(hits)
 
         # Seçilen ilin adını ve ilçelerini al
-        il = random_city['_source']['il']
-        ilceler = random_city['_source']['ilceler']
+        source = random_city.get('_source', {})
+        il = source.get('il', 'Bilgi yok')
+        nufus = source.get('nufus', 'Bilgi yok')
+        ilceler = source.get('ilceler', '').split(', ') if source.get('ilceler') else ['Bilgi yok']
+        
 
-        return jsonify({"il": il, "ilceler": ilceler})
+        return jsonify({"il": il, "nufus": nufus, "ilceler": ilceler})
     except Exception as e:
         return jsonify({"error": str(e)})
 
